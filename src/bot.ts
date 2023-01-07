@@ -1,6 +1,6 @@
 import { Spot } from '@binance/connector';
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
-import {NewOrderComplete} from "./types/order.interface.js";
+import {BinanceNewOrderComplete, BinanceOrder} from "./types/order.interface.js";
 
 export class BinanceBot {
 
@@ -33,8 +33,7 @@ export class BinanceBot {
         }
     }
 
-    // TODO: define interface
-    public async placeBuyLimitOrder(exchangePairTicker: CurrencyPairTickerEnum, price: number, quantity: number): Promise<NewOrderComplete> {
+    public async placeBuyLimitOrder(exchangePairTicker: CurrencyPairTickerEnum, price: number, quantity: number): Promise<BinanceNewOrderComplete> {
         try {
             const {data} = await this.binanceConnectClient.newOrder(exchangePairTicker, 'BUY', 'LIMIT', {
                 price: price.toString(),
@@ -60,8 +59,16 @@ export class BinanceBot {
     //
     // }
     //
-    // public getOrderStatus() {
-    //
-    // }
+
+    // TODO: update interface
+    public async getOrderStatus(ticker: CurrencyPairTickerEnum, orderId: number): Promise<BinanceOrder> {
+        try {
+            const { data } = await this.binanceConnectClient.getOrder(ticker, {orderId});
+            return data;
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
 
 }

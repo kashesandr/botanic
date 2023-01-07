@@ -14,19 +14,20 @@ const bot = new BinanceBot(client);
 
 const start = async () => {
 
-
         // client.logger.log(data);
         // const balance = await bot.getBalanceByTicker(CurrencyTickerEnum.USDT);
 
         const orderQuantity = 11;
-        const orderPrice = 0.9999;
         const hasEnoughBalance = await bot.isEnoughBalance(CurrencyTickerEnum.USDT, orderQuantity);
         // const marketPrice = await bot.getExchangePriceByTicker(CurrencyPairTickerEnum.BUSDUSDT);
 
         if (hasEnoughBalance) {
-            const res = await bot.placeBuyLimitOrder(CurrencyPairTickerEnum.BUSDUSDT, orderPrice, orderQuantity)
-            console.log(123, res);
+            // const res = await bot.placeBuyLimitOrder(CurrencyPairTickerEnum.BUSDUSDT, 0.9999, orderQuantity)
+            // console.log(111, res);
         }
+
+        const res2 = await bot.getOrderStatus(CurrencyPairTickerEnum.BUSDUSDT, 827256675);
+        console.log(222, res2);
 
         // we try to make profit when buy/sell BUSD with USDT
         // we have a budget e.g. 1000 USDT
@@ -39,4 +40,4 @@ const start = async () => {
 
 };
 
-export default {start};
+export default { start };
