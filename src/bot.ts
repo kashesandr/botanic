@@ -1,10 +1,22 @@
-import { Spot } from '@binance/connector';
+import {Spot as BinanceSpot} from '@binance/connector';
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
-import {BinanceNewOrderComplete, BinanceOrder} from "./types/order.interface.js";
+import {BinanceNewOrderComplete, BinanceOrder, BinanceOrderDetails} from "./types/order.interface.js";
+import {PubSub} from "./pubsub.js";
+import {BinanceOrderStatusEnum} from "./constants/order.enum.js";
 
 export class BinanceBot {
 
-    constructor(private binanceConnectClient: Spot) {
+    pubsub = new PubSub();
+    watchedOrders: BinanceOrder[] = [];
+    binanceConnectClient: BinanceSpot = null;
+
+    constructor(private apiKey: string, private apiSecret: string, private baseURL: string) {
+        if (!apiKey || !apiSecret) {
+            throw new Error('Error creating Binance Bot, API keys not provided')
+        }
+
+        this.binanceConnectClient = new BinanceSpot(this.apiKey, this.apiSecret, { baseURL: this.baseURL });
+        this.ordersCheckLoop(5000);
 
     }
 
@@ -47,21 +59,7 @@ export class BinanceBot {
         }
     }
 
-    // public placeSellOrder(baseCurrencyTicker: CurrencyTickerEnum, baseAmout: number, sellCurrencyTicker: CurrencyTickerEnum): string {
-    //
-    // }
-    //
-    // public onOrderFulfilled(orderId: string): Promise<any> {
-    //
-    // }
-    //
-    // public calculateProfit(): number {
-    //
-    // }
-    //
-
-    // TODO: update interface
-    public async getOrderStatus(ticker: CurrencyPairTickerEnum, orderId: number): Promise<BinanceOrder> {
+    public async getOrderDetails(ticker: CurrencyPairTickerEnum, orderId: number): Promise<BinanceOrderDetails> {
         try {
             const { data } = await this.binanceConnectClient.getOrder(ticker, {orderId});
             return data;
@@ -71,4 +69,67 @@ export class BinanceBot {
         }
     }
 
+    public subscribeOnceOnOrderComplete(order: BinanceOrder, callback: Function) {
+        this.watchedOrders.push(order);
+        const key = this.getOrderWatchKey(order);
+        this.pubsub.subscribe(key, callback, true);
+    }
+
+    /**
+     * checks all watched orders and returns filled ones
+     * @private
+     */
+    private async ordersCheck(): Promise<BinanceOrder[]> {
+        const keys = Object.keys(this.pubsub.pubsubStore);
+        const promises = keys.map( key => {
+            const {symbol, orderId} = this.getSymbolAndIdFromOrderWatchKey(key);
+            return this.getOrderDetails(symbol, orderId)
+        } )
+        const orders = await Promise.all(promises);
+        const ordersFilled: BinanceOrder[] = [];
+        orders.forEach( order => {
+            if (order.status === BinanceOrderStatusEnum.FILLED) {
+                ordersFilled.push(order);
+                const key = this.getOrderWatchKey(order);
+                this.pubsub.publish<BinanceOrderDetails>(key, order);
+            }
+        });
+        return ordersFilled;
+    }
+
+    private getOrderWatchKey( order: BinanceOrder ): string {
+        return `${order.symbol}-${order.orderId}`;
+    }
+
+    private getSymbolAndIdFromOrderWatchKey(key: string): {symbol: CurrencyPairTickerEnum, orderId: number} {
+        const [symbol, orderId] = key.split('-');
+        return {
+            symbol: symbol as CurrencyPairTickerEnum,
+            orderId: Number(orderId)
+        }
+    }
+
+    // TODO: start and stop loop depending on watched orders
+    private ordersCheckLoop(timeout = 5000): void {
+        setTimeout(async () => {
+            const ordersFilled: BinanceOrder[] = await this.ordersCheck();
+            if (ordersFilled.length > 0) {
+
+            }
+            this.ordersCheckLoop();
+        }, timeout);
+    }
+
+    // public placeSellOrder(baseCurrencyTicker: CurrencyTickerEnum, baseAmout: number, sellCurrencyTicker: CurrencyTickerEnum): string {
+    //
+    // }
+    //
+
+    // public calculateProfit(): number {
+    //
+    // }
+
 }
+
+
+

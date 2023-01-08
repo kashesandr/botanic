@@ -1,9 +1,12 @@
 import {CurrencyPairTickerEnum} from "../constants/currency-ticker.enum.js";
 import {BinanceOrderStatusEnum} from "../constants/order.enum.js";
 
-export interface BinanceNewOrderComplete {
+export interface BinanceOrder {
     symbol: CurrencyPairTickerEnum;
     orderId: number;
+}
+
+export interface BinanceNewOrderComplete extends BinanceOrder {
     orderListId: number;
     clientOrderId: string;
     transactTime: number;
@@ -20,9 +23,7 @@ export interface BinanceNewOrderComplete {
     selfTradePreventionMode: string;
 }
 
-export interface BinanceOrder {
-    symbol: CurrencyPairTickerEnum;
-    orderId: number;
+export interface BinanceOrderDetails extends BinanceOrder {
     orderListId: number;
     clientOrderId: string;
     price: string;
@@ -43,3 +44,7 @@ export interface BinanceOrder {
     selfTradePreventionMode: string;
 }
 
+export interface OrderSubscription {
+    symbol: CurrencyPairTickerEnum;
+    orderId: number;
+}
