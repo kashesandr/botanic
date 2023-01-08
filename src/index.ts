@@ -1,7 +1,7 @@
-import dotenv from 'dotenv';
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
 import {BinanceBot} from "./bot.js";
 import {BinanceNewOrderComplete} from "./types/order.interface.js";
+import dotenv from 'dotenv';
 dotenv.config({ path: process.cwd()+'/.env' });
 
 const apiKey = process.env.BINANCE_API_KEY;
