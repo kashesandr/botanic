@@ -1,7 +1,8 @@
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
-import {BinanceBot} from "./bot.js";
+import {BinanceBot} from "./binance-bot.js";
 import {BinanceNewOrderComplete} from "./types/order.interface.js";
 import dotenv from 'dotenv';
+import {logger} from "./logger.js";
 dotenv.config({ path: process.cwd()+'/.env' });
 
 const apiKey = process.env.BINANCE_API_KEY;
@@ -25,11 +26,11 @@ const start = async () => {
         const hasEnoughBalance = await bot.isEnoughBalance(CurrencyTickerEnum.USDT, orderQuantity);
         const marketPrice = await bot.getExchangePriceByTicker(CurrencyPairTickerEnum.BUSDUSDT);
         const orderPrice = 0.9999;
-        console.log(`${CurrencyPairTickerEnum.BUSDUSDT}: marketPrice=${marketPrice}, orderPrice=${orderPrice}`)
+        logger.debug(`${CurrencyPairTickerEnum.BUSDUSDT}: marketPrice=${marketPrice}, orderPrice=${orderPrice}`)
 
         if (hasEnoughBalance) {
             const res: BinanceNewOrderComplete = await bot.placeBuyLimitOrder(CurrencyPairTickerEnum.BUSDUSDT, orderPrice, orderQuantity)
-            bot.subscribeOnceOnOrderComplete(res, (d) => {
+            bot.subscribeOnceOnOrderFinished(res, (d) => {
                 console.log('subscribeOnceOnOrderComplete', d);
             })
         }

@@ -1,11 +1,11 @@
-interface IdCallback {
+interface SubscriptionDetails {
     id: number;
     callback: Function;
     subscribeOnce: boolean;
 }
 
 interface PubsubStore {
-    [topic: string]: IdCallback[]
+    [topic: string]: SubscriptionDetails[]
 }
 
 export class PubSub {
@@ -26,13 +26,7 @@ export class PubSub {
     }
 
     unsubscribe(topic: string, id: number): void {
-        const subscribers: IdCallback[] = [];
-        for (let subscriber of this.pubsubStore[topic]) {
-            if (subscriber.id !== id) {
-                subscribers.push(subscriber);
-            }
-        }
-        this.pubsubStore[topic] = subscribers;
+        this.pubsubStore[topic] = [...this.pubsubStore[topic]?.filter( item => item.id !== id) ?? []];
     }
 
     publish<T>(topic: string, data: T): void {
