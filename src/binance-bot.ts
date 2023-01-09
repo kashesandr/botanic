@@ -5,10 +5,11 @@ import {PubSub} from "./pubsub.js";
 import {BinanceOrderStatusEnum} from "./constants/order.enum.js";
 import {logger, LoggerDebugInputParams, LoggerTryCatchExceptionAsync} from './logger.js';
 
+const loggerPrefix = 'BinanceBot';
+
 export class BinanceBot {
 
     pubsub = new PubSub();
-    watchedOrders: BinanceOrder[] = [];
     binanceConnectClient: BinanceSpot = null;
 
     constructor(private apiKey: string, private apiSecret: string, private baseURL: string) {
@@ -23,28 +24,28 @@ export class BinanceBot {
 
     }
 
-    @LoggerDebugInputParams()
-    @LoggerTryCatchExceptionAsync()
+    @LoggerDebugInputParams(loggerPrefix)
+    @LoggerTryCatchExceptionAsync(loggerPrefix)
     public async getBalanceByTicker(ticker: CurrencyTickerEnum): Promise<number> {
         const {data} = await this.binanceConnectClient.userAsset({asset: ticker});
         return Number(data[0]?.free);
     }
 
-    @LoggerDebugInputParams()
+    @LoggerDebugInputParams(loggerPrefix)
     public async isEnoughBalance(ticker: CurrencyTickerEnum, requiredBalance: number): Promise<boolean> {
         const currentBalance = await this.getBalanceByTicker(ticker);
         return currentBalance >= requiredBalance
     }
 
-    @LoggerDebugInputParams()
-    @LoggerTryCatchExceptionAsync()
+    @LoggerDebugInputParams(loggerPrefix)
+    @LoggerTryCatchExceptionAsync(loggerPrefix)
     public async getExchangePriceByTicker(exchangePairTicker: CurrencyPairTickerEnum): Promise<number> {
         const {data} = await this.binanceConnectClient.tickerPrice(exchangePairTicker);
         return data?.price;
     }
 
-    @LoggerDebugInputParams()
-    @LoggerTryCatchExceptionAsync()
+    @LoggerDebugInputParams(loggerPrefix)
+    @LoggerTryCatchExceptionAsync(loggerPrefix)
     public async placeBuyLimitOrder(exchangePairTicker: CurrencyPairTickerEnum, price: number, quantity: number): Promise<BinanceNewOrderComplete> {
         const {data} = await this.binanceConnectClient.newOrder(exchangePairTicker, 'BUY', 'LIMIT', {
             price: price.toString(),
@@ -55,23 +56,21 @@ export class BinanceBot {
         return data;
     }
 
-    @LoggerDebugInputParams()
-    @LoggerTryCatchExceptionAsync()
+    @LoggerDebugInputParams(loggerPrefix)
+    @LoggerTryCatchExceptionAsync(loggerPrefix)
     public async getOrderDetails(ticker: CurrencyPairTickerEnum, orderId: number): Promise<BinanceOrderDetails> {
         const {data} = await this.binanceConnectClient.getOrder(ticker, {orderId});
         return data;
     }
 
-    @LoggerDebugInputParams()
+    @LoggerDebugInputParams(loggerPrefix)
     public subscribeOnceOnOrderFinished(order: BinanceOrder, callback: Function) {
-        this.watchedOrders.push(order);
         const key = this.getOrderWatchKey(order);
         this.pubsub.subscribe(key, callback, true);
     }
 
-    @LoggerDebugInputParams()
+    @LoggerDebugInputParams(loggerPrefix)
     private async ordersCheck(): Promise<BinanceOrder[]> {
-        console.log(this.pubsub.pubsubStore);
         const keys = Object.keys(this.pubsub.pubsubStore);
         const promises = keys.map(key => {
             const {symbol, orderId} = this.getSymbolAndIdFromOrderWatchKey(key);
@@ -103,12 +102,13 @@ export class BinanceBot {
     }
 
     // TODO: start and stop loop depending on watched orders
-    @LoggerDebugInputParams()
+    @LoggerDebugInputParams(loggerPrefix)
     private ordersCheckLoop(timeout = 5000): void {
         setTimeout(async () => {
             const ordersNotInNewState: BinanceOrder[] = await this.ordersCheck();
             if (ordersNotInNewState?.length > 0) {
-                // TODO: find out why it the store is not updated
+                // TODO: find out why the store is not updated
+
                 logger.info(`Orders changed state from ${BinanceOrderStatusEnum.NEW}: ${ordersNotInNewState.length}`)
             }
             this.ordersCheckLoop();

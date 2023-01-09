@@ -15,18 +15,18 @@ if (!isProduction) {
     }));
 }
 
-export const LoggerDebugInputParams = () => {
+export const LoggerDebugInputParams = (prefix: string) => {
     // @ts-ignore
     return (target: unknown, name: string, desc: PropertyDescriptor) => {
         const methodName = desc.value;
         desc.value = function (...args: any[]) {
-            logger.debug(`${name}: ${JSON.stringify(arguments)}`);
+            logger.debug(`${prefix}.${name}: ${JSON.stringify(arguments)}`);
             return methodName.apply(this, args);
         }
     }
 }
 
-export const LoggerTryCatchExceptionAsync = () => {
+export const LoggerTryCatchExceptionAsync = (prefix: string) => {
     // @ts-ignore
     return (target: unknown, nameMethod: string, descriptor: PropertyDescriptor) => {
         const originalMethod = descriptor.value
@@ -36,7 +36,7 @@ export const LoggerTryCatchExceptionAsync = () => {
                 return executionMethod
             }  catch (error) {
                 logger.error(error);
-                throw new Error(error?.message ?? error)
+                throw new Error(`${prefix}: ${error?.message ?? error}`)
             }
         }
     }

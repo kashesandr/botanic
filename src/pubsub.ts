@@ -25,18 +25,22 @@ export class PubSub {
         return id;
     }
 
-    unsubscribe(topic: string, id: number): void {
-        this.pubsubStore[topic] = [...this.pubsubStore[topic]?.filter( item => item.id !== id) ?? []];
+    unsubscribe(topic: string, unsubscribeId: number): void {
+        const subscriptionsFiltered: SubscriptionDetails[] = (this.pubsubStore[topic] ?? []).filter( (item) => item.id !== unsubscribeId);
+        this.pubsubStore[topic] = [...subscriptionsFiltered];
+        if (!subscriptionsFiltered.length) {
+            delete this.pubsubStore[topic];
+        }
     }
 
     publish<T>(topic: string, data: T): void {
-        for (let subscriber of this.pubsubStore[topic]) {
-            if (subscriber.subscribeOnce) {
-                subscriber.callback(data);
-                this.unsubscribe(topic, subscriber.id);
+        Object.values(this.pubsubStore[topic]).forEach( (subscription) => {
+            if (subscription.subscribeOnce) {
+                subscription.callback(data);
+                this.unsubscribe(topic, subscription.id);
             } else {
-                subscriber.callback(data);
+                subscription.callback(data);
             }
-        }
+        })
     }
 }
