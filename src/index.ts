@@ -1,9 +1,10 @@
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
 import {BinanceBot} from "./binance-bot.js";
-import {BinanceNewOrderComplete} from "./types/order.interface.js";
+import {BinanceNewOrderComplete, NewOrder} from "./types/order.interface.js";
 import dotenv from 'dotenv';
 import {logger} from "./logger.js";
-dotenv.config({ path: process.cwd()+'/.env' });
+
+dotenv.config({path: process.cwd() + '/.env'});
 
 const apiKey = process.env.BINANCE_API_KEY;
 const apiSecret = process.env.BINANCE_API_KEY_SECRET;
@@ -22,19 +23,22 @@ const bot = new BinanceBot(apiKey, apiSecret, baseURL);
 
 const start = async () => {
 
-        const orderQuantity = 11;
-        const hasEnoughBalance = await bot.isEnoughBalance(CurrencyTickerEnum.USDT, orderQuantity);
-        const marketPrice = await bot.getExchangePriceByTicker(CurrencyPairTickerEnum.BUSDUSDT);
-        const orderPrice = 0.9999;
-        logger.debug(`${CurrencyPairTickerEnum.BUSDUSDT}: marketPrice=${marketPrice}, orderPrice=${orderPrice}`)
+    const newOrder: NewOrder = {
+        quantity: 11,
+        price: 0.9999,
+        symbol: CurrencyPairTickerEnum.BUSDUSDT
+    }
+    const hasEnoughBalance = await bot.isEnoughBalance(CurrencyTickerEnum.USDT, newOrder.quantity);
+    const marketPrice = await bot.getExchangePriceByTicker(CurrencyPairTickerEnum.BUSDUSDT);
+    logger.debug(`${CurrencyPairTickerEnum.BUSDUSDT}: marketPrice=${marketPrice}, orderPrice=${newOrder.price}`)
 
-        if (hasEnoughBalance) {
-            const res: BinanceNewOrderComplete = await bot.placeBuyLimitOrder(CurrencyPairTickerEnum.BUSDUSDT, orderPrice, orderQuantity)
-            bot.subscribeOnceOnOrderFinished(res, (d) => {
-                console.log('subscribeOnceOnOrderComplete', d);
-            })
-        }
+    if (hasEnoughBalance) {
+        const res: BinanceNewOrderComplete = await bot.placeBuyLimitOrder(newOrder);
+        bot.subscribeOnceOnOrderFinished(res, (d) => {
+            logger.debug('subscribeOnceOnOrderComplete', d);
+        })
+    }
 
 };
 
-export default { start };
+export default {start};

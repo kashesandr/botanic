@@ -1,6 +1,6 @@
 import {Spot as BinanceSpot} from '@binance/connector';
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
-import {BinanceNewOrderComplete, BinanceOrder, BinanceOrderDetails} from "./types/order.interface.js";
+import {BinanceNewOrderComplete, BinanceOrder, BinanceOrderDetails, NewOrder} from "./types/order.interface.js";
 import {PubSub} from "./pubsub.js";
 import {BinanceOrderStatusEnum} from "./constants/order.enum.js";
 import {logger, LoggerDebugInputParams, LoggerTryCatchExceptionAsync} from './logger.js';
@@ -46,8 +46,8 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     @LoggerTryCatchExceptionAsync(loggerPrefix)
-    public async placeBuyLimitOrder(exchangePairTicker: CurrencyPairTickerEnum, price: number, quantity: number): Promise<BinanceNewOrderComplete> {
-        const {data} = await this.binanceConnectClient.newOrder(exchangePairTicker, 'BUY', 'LIMIT', {
+    public async placeBuyLimitOrder({price, quantity, symbol}: NewOrder): Promise<BinanceNewOrderComplete> {
+        const {data} = await this.binanceConnectClient.newOrder(symbol, 'BUY', 'LIMIT', {
             price: price.toString(),
             quantity,
             timeInForce: 'GTC'

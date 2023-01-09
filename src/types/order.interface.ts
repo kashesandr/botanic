@@ -44,7 +44,9 @@ export interface BinanceOrderDetails extends BinanceOrder {
     selfTradePreventionMode: string;
 }
 
-export interface OrderSubscription {
+export interface NewOrder {
+    price: number;
     symbol: CurrencyPairTickerEnum;
-    orderId: number;
+    quantity: number;
 }
+
