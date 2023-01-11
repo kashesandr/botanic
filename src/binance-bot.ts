@@ -2,7 +2,7 @@ import {Spot as BinanceSpot} from '@binance/connector';
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
 import {BinanceNewOrderComplete, BinanceOrder, BinanceOrderDetails, NewOrder} from "./types/order.interface.js";
 import {PubSub} from "./pubsub.js";
-import {BinanceTradingSideEnum, BinanceOrderStatusEnum} from "./constants/order.enum.js";
+import {BinanceOrderStatusEnum, BinanceTradingSideEnum} from "./constants/order.enum.js";
 import {logger, LoggerDebugInputParams, LoggerTryCatchExceptionAsync} from './logger.js';
 import {setTimeoutPromise} from "./helpers.js";
 
@@ -33,6 +33,7 @@ export class BinanceBot {
     }
 
     @LoggerDebugInputParams(loggerPrefix)
+    @LoggerTryCatchExceptionAsync(loggerPrefix)
     public async isEnoughBalance(ticker: CurrencyTickerEnum, requiredBalance: number): Promise<boolean> {
         const currentBalance = await this.getBalanceByTicker(ticker);
         return currentBalance >= requiredBalance
@@ -56,7 +57,7 @@ export class BinanceBot {
         const symbol = `${currencyTicker}${baseCurrencyTicker}`;
         const {data} = await this.binanceConnectClient.newOrder(symbol, BinanceTradingSideEnum.BUY, 'LIMIT', {
             price: basePrice.toString(),
-            baseQuantity: baseQuantity,
+            quantity: baseQuantity,
             timeInForce: 'GTC'
         })
         logger.info(`Order placed successfully: ${data}`)
@@ -71,10 +72,10 @@ export class BinanceBot {
             logger.error(`${loggerPrefix}: Error placing the SELL order: insufficient ${baseCurrencyTicker} balance ${baseQuantity}`)
             return null;
         }
-        const symbol = `${currencyTicker}${baseCurrencyTicker}`;
+        const symbol = `${baseCurrencyTicker}${currencyTicker}`;
         const {data} = await this.binanceConnectClient.newOrder(symbol, BinanceTradingSideEnum.SELL, 'LIMIT', {
             price: basePrice.toString(),
-            baseQuantity: baseQuantity,
+            quantity: baseQuantity,
             timeInForce: 'GTC'
         })
         logger.info(`Order placed successfully: ${data}`)
