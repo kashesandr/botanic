@@ -1,4 +1,4 @@
-import {CurrencyPairTickerEnum} from "../constants/currency-ticker.enum.js";
+import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "../constants/currency-ticker.enum.js";
 import {BinanceOrderStatusEnum} from "../constants/order.enum.js";
 
 export interface BinanceOrder {
@@ -45,8 +45,8 @@ export interface BinanceOrderDetails extends BinanceOrder {
 }
 
 export interface NewOrder {
-    price: number;
-    symbol: CurrencyPairTickerEnum;
-    quantity: number;
+    basePrice: number;
+    baseQuantity: number;
+    baseCurrencyTicker: CurrencyTickerEnum;
+    currencyTicker: CurrencyTickerEnum;
 }
-

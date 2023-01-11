@@ -7,3 +7,8 @@ export enum BinanceOrderStatusEnum {
     REJECTED= 'REJECTED',
     EXPIRED= 'EXPIRED',
 }
+
+export enum BinanceTradingSideEnum {
+    BUY = 'BUY',
+    SELL = 'SELL',
+}

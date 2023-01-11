@@ -2,8 +2,9 @@ import {Spot as BinanceSpot} from '@binance/connector';
 import {CurrencyPairTickerEnum, CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
 import {BinanceNewOrderComplete, BinanceOrder, BinanceOrderDetails, NewOrder} from "./types/order.interface.js";
 import {PubSub} from "./pubsub.js";
-import {BinanceOrderStatusEnum} from "./constants/order.enum.js";
+import {BinanceTradingSideEnum, BinanceOrderStatusEnum} from "./constants/order.enum.js";
 import {logger, LoggerDebugInputParams, LoggerTryCatchExceptionAsync} from './logger.js';
+import {setTimeoutPromise} from "./helpers.js";
 
 const loggerPrefix = 'BinanceBot';
 
@@ -46,10 +47,34 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     @LoggerTryCatchExceptionAsync(loggerPrefix)
-    public async placeBuyLimitOrder({price, quantity, symbol}: NewOrder): Promise<BinanceNewOrderComplete> {
-        const {data} = await this.binanceConnectClient.newOrder(symbol, 'BUY', 'LIMIT', {
-            price: price.toString(),
-            quantity,
+    public async placeBuyLimitOrder({basePrice, baseQuantity, baseCurrencyTicker, currencyTicker}: NewOrder): Promise<BinanceNewOrderComplete> {
+        const hasEnoughBalanceToBuy = await this.isEnoughBalance(baseCurrencyTicker, baseQuantity);
+        if (!hasEnoughBalanceToBuy) {
+            logger.error(`${loggerPrefix}: Error placing the BUY order: insufficient ${baseCurrencyTicker} balance ${baseQuantity}`)
+            return null;
+        }
+        const symbol = `${currencyTicker}${baseCurrencyTicker}`;
+        const {data} = await this.binanceConnectClient.newOrder(symbol, BinanceTradingSideEnum.BUY, 'LIMIT', {
+            price: basePrice.toString(),
+            baseQuantity: baseQuantity,
+            timeInForce: 'GTC'
+        })
+        logger.info(`Order placed successfully: ${data}`)
+        return data;
+    }
+
+    @LoggerDebugInputParams(loggerPrefix)
+    @LoggerTryCatchExceptionAsync(loggerPrefix)
+    public async placeSellLimitOrder({basePrice, baseQuantity, baseCurrencyTicker, currencyTicker}: NewOrder): Promise<BinanceNewOrderComplete> {
+        const hasEnoughBalanceToBuy = await this.isEnoughBalance(baseCurrencyTicker, baseQuantity);
+        if (!hasEnoughBalanceToBuy) {
+            logger.error(`${loggerPrefix}: Error placing the SELL order: insufficient ${baseCurrencyTicker} balance ${baseQuantity}`)
+            return null;
+        }
+        const symbol = `${currencyTicker}${baseCurrencyTicker}`;
+        const {data} = await this.binanceConnectClient.newOrder(symbol, BinanceTradingSideEnum.SELL, 'LIMIT', {
+            price: basePrice.toString(),
+            baseQuantity: baseQuantity,
             timeInForce: 'GTC'
         })
         logger.info(`Order placed successfully: ${data}`)
@@ -65,6 +90,10 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     public subscribeOnceOnOrderFinished(order: BinanceOrder, callback: Function) {
+        if (!order) {
+            logger.error(`${loggerPrefix}: No order provided`)
+            return;
+        }
         const key = this.getOrderWatchKey(order);
         this.pubsub.subscribe(key, callback, true);
     }
@@ -103,22 +132,16 @@ export class BinanceBot {
 
     // TODO: start and stop loop depending on watched orders
     @LoggerDebugInputParams(loggerPrefix)
-    private ordersCheckLoop(timeout = 5000): void {
-        setTimeout(async () => {
-            const ordersNotInNewState: BinanceOrder[] = await this.ordersCheck();
-            if (ordersNotInNewState?.length > 0) {
-                // TODO: find out why the store is not updated
+    private async ordersCheckLoop(timeout = 5000): Promise<void> {
+        const ordersNotInNewState: BinanceOrder[] = await this.ordersCheck();
+        if (ordersNotInNewState?.length > 0) {
+            // TODO: find out why the store is not updated
 
-                logger.info(`Orders changed state from ${BinanceOrderStatusEnum.NEW}: ${ordersNotInNewState.length}`)
-            }
-            this.ordersCheckLoop();
-        }, timeout);
+            logger.info(`Orders changed state from ${BinanceOrderStatusEnum.NEW}: ${ordersNotInNewState.length}`)
+        }
+        await setTimeoutPromise(timeout);
+        await this.ordersCheckLoop();
     }
-
-    // public placeSellOrder(baseCurrencyTicker: CurrencyTickerEnum, baseAmout: number, sellCurrencyTicker: CurrencyTickerEnum): string {
-    //
-    // }
-    //
 
     // public calculateProfit(): number {
     //
