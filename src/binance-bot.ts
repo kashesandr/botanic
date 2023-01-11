@@ -90,13 +90,17 @@ export class BinanceBot {
     }
 
     @LoggerDebugInputParams(loggerPrefix)
-    public subscribeOnceOnOrderFinished(order: BinanceOrder, callback: Function) {
-        if (!order) {
-            logger.error(`${loggerPrefix}: No order provided`)
-            return;
-        }
-        const key = this.getOrderWatchKey(order);
-        this.pubsub.subscribe(key, callback, true);
+    public async subscribeOnceOnOrderFinished(order: BinanceOrder): Promise<BinanceOrderDetails> {
+        return new Promise((resolve) => {
+            if (!order) {
+                logger.error(`${loggerPrefix}: No order provided`)
+                return;
+            }
+            const key = this.getOrderWatchKey(order);
+            this.pubsub.subscribe(key, (order: BinanceOrderDetails) => {
+                resolve(order);
+            }, true);
+        });
     }
 
     @LoggerDebugInputParams(loggerPrefix)
@@ -136,8 +140,6 @@ export class BinanceBot {
     private async ordersCheckLoop(timeout = 5000): Promise<void> {
         const ordersNotInNewState: BinanceOrder[] = await this.ordersCheck();
         if (ordersNotInNewState?.length > 0) {
-            // TODO: find out why the store is not updated
-
             logger.info(`Orders changed state from ${BinanceOrderStatusEnum.NEW}: ${ordersNotInNewState.length}`)
         }
         await setTimeoutPromise(timeout);

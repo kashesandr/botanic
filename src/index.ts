@@ -1,7 +1,7 @@
 import {CurrencyTickerEnum} from "./constants/currency-ticker.enum.js";
 import {BinanceBot} from "./binance-bot.js";
 import {BinanceNewOrderComplete, NewOrder} from "./types/order.interface.js";
-import {logger} from "./logger.js";
+// import {logger} from "./logger.js";
 // import * as database from './database.js';
 import {BINANCE_API_KEY, BINANCE_API_KEY_SECRET, BINANCE_API_URL} from "./configs.js";
 
@@ -36,14 +36,12 @@ const start = async () => {
     }
 
     const res: BinanceNewOrderComplete = await bot.placeBuyLimitOrder(newOrderBuy);
-    bot.subscribeOnceOnOrderFinished(res, (d) => {
-        logger.debug('subscribeOnceOnOrderComplete', d);
-    });
+    const res2 = await bot.subscribeOnceOnOrderFinished(res);
+    console.log(123, res2);
 
-    const res2: BinanceNewOrderComplete = await bot.placeSellLimitOrder(newOrderSell);
-    bot.subscribeOnceOnOrderFinished(res2, (d) => {
-        logger.debug('subscribeOnceOnOrderComplete', d);
-    });
+    const res3: BinanceNewOrderComplete = await bot.placeSellLimitOrder(newOrderSell);
+    const res4 = await bot.subscribeOnceOnOrderFinished(res3);
+    console.log(222, res4);
 
 };
 
