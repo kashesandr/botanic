@@ -23,14 +23,14 @@ const start = async () => {
 
     const newOrderBuy: NewOrder = {
         baseQuantity: 11,
-        basePrice: 0.9990,
+        basePrice: 0.9999,
         baseCurrencyTicker: CurrencyTickerEnum.USDT,
         currencyTicker: CurrencyTickerEnum.BUSD
     }
 
     const newOrderSell: NewOrder = {
         baseQuantity: 11,
-        basePrice: 1.1,
+        basePrice: 1.0001,
         baseCurrencyTicker: CurrencyTickerEnum.BUSD,
         currencyTicker: CurrencyTickerEnum.USDT
     }
