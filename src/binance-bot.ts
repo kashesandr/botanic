@@ -7,6 +7,7 @@ import {logger, LoggerDebugInputParams, LoggerTryCatchExceptionAsync} from './lo
 import {setTimeoutPromise} from "./helpers.js";
 
 const loggerPrefix = 'BinanceBot';
+const CHECK_ORDERS_LOOP_TIMEOUT = 1000*10;
 
 export class BinanceBot {
 
@@ -20,7 +21,7 @@ export class BinanceBot {
             throw new Error('Error creating Binance Bot, API keys not provided');
         } else {
             this.binanceConnectClient = new BinanceSpot(this.apiKey, this.apiSecret, {baseURL: this.baseURL, logger});
-            this.ordersCheckLoop(5000);
+            this.runOrdersCheckLoopInBackground(CHECK_ORDERS_LOOP_TIMEOUT);
         }
 
     }
@@ -137,13 +138,13 @@ export class BinanceBot {
 
     // TODO: start and stop loop depending on watched orders
     @LoggerDebugInputParams(loggerPrefix)
-    private async ordersCheckLoop(timeout = 5000): Promise<void> {
+    private async runOrdersCheckLoopInBackground(timeout: number): Promise<void> {
         const ordersNotInNewState: BinanceOrder[] = await this.ordersCheck();
         if (ordersNotInNewState?.length > 0) {
             logger.info(`Orders changed state from ${BinanceOrderStatusEnum.NEW}: ${ordersNotInNewState.length}`)
         }
         await setTimeoutPromise(timeout);
-        await this.ordersCheckLoop();
+        await this.runOrdersCheckLoopInBackground(timeout);
     }
 
     // public calculateProfit(): number {
