@@ -61,7 +61,7 @@ export class BinanceBot {
             quantity: baseQuantity,
             timeInForce: 'GTC'
         })
-        logger.info(`Order placed successfully: ${data}`)
+        logger.info(`Order placed successfully: ${BinanceTradingSideEnum.BUY} ${currencyTicker} (${baseCurrencyTicker} ${baseQuantity})`)
         return data;
     }
 
@@ -79,7 +79,7 @@ export class BinanceBot {
             quantity: baseQuantity,
             timeInForce: 'GTC'
         })
-        logger.info(`Order placed successfully: ${data}`)
+        logger.info(`Order placed successfully: ${BinanceTradingSideEnum.SELL} ${currencyTicker} (${baseCurrencyTicker} ${baseQuantity})`)
         return data;
     }
 
@@ -105,10 +105,8 @@ export class BinanceBot {
     }
 
     @LoggerDebugInputParams(loggerPrefix)
-    private async ordersCheck(): Promise<BinanceOrder[]> {
-        const keys = Object.keys(this.pubsub.pubsubStore);
-        const promises = keys.map(key => {
-            const {symbol, orderId} = this.getSymbolAndIdFromOrderWatchKey(key);
+    private async ordersCheck(items: [orderId: number, symbol: CurrencyPairTickerEnum][]): Promise<BinanceOrder[]> {
+        const promises = items.map(([orderId, symbol]) => {
             return this.getOrderDetails(symbol, orderId)
         })
         const orders = await Promise.all(promises);
@@ -139,10 +137,18 @@ export class BinanceBot {
     // TODO: start and stop loop depending on watched orders
     @LoggerDebugInputParams(loggerPrefix)
     private async runOrdersCheckLoopInBackground(timeout: number): Promise<void> {
-        const ordersNotInNewState: BinanceOrder[] = await this.ordersCheck();
-        if (ordersNotInNewState?.length > 0) {
-            logger.info(`Orders changed state from ${BinanceOrderStatusEnum.NEW}: ${ordersNotInNewState.length}`)
-        }
+
+        const keys = Object.keys(this.pubsub.pubsubStore);
+        const orderIdSymbolsArr: [number, CurrencyPairTickerEnum][] = keys.map(key => {
+            const {symbol, orderId} = this.getSymbolAndIdFromOrderWatchKey(key);
+            return [orderId, symbol]
+        })
+
+        const ordersNotInNewState: BinanceOrder[] = await this.ordersCheck(orderIdSymbolsArr);
+        ordersNotInNewState.forEach( (order) => {
+            logger.debug(`Order ${order.orderId} ${order.symbol} changed state.`)
+        })
+
         await setTimeoutPromise(timeout);
         await this.runOrdersCheckLoopInBackground(timeout);
     }

@@ -34,13 +34,13 @@ const start = async () => {
     // await database.connect();
     // const marketPrice = await bot.getExchangePriceByTicker(CurrencyPairTickerEnum.BUSDUSDT);
 
-    const res: BinanceNewOrderComplete = await bot.placeBuyLimitOrder(newOrderBuy);
-    const res2 = await bot.subscribeOnceOnOrderFinished(res);
-    logger.debug(res2);
+    const buyBinanceOrder: BinanceNewOrderComplete = await bot.placeBuyLimitOrder(newOrderBuy);
+    const buyBinanceOrderCompleted = await bot.subscribeOnceOnOrderFinished(buyBinanceOrder);
+    logger.info(`Order ${buyBinanceOrderCompleted.orderId} changed status to ${buyBinanceOrderCompleted.status}`);
 
-    const res3: BinanceNewOrderComplete = await bot.placeSellLimitOrder(newOrderSell);
-    const res4 = await bot.subscribeOnceOnOrderFinished(res3);
-    logger.debug(res4);
+    const sellBinanceOrder: BinanceNewOrderComplete = await bot.placeSellLimitOrder(newOrderSell);
+    const sellBinanceOrderCompleted = await bot.subscribeOnceOnOrderFinished(sellBinanceOrder);
+    logger.info(`Order ${sellBinanceOrderCompleted.orderId} changed status to ${sellBinanceOrderCompleted.status}`);
 
     await start();
 

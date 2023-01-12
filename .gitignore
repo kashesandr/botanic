@@ -1,5 +1,4 @@
 /node_modules/
 /.idea/
 /.env
-/debug.log
-/error.log
+/logs

@@ -27,6 +27,7 @@
   },
   "scripts": {
     "start": "./node_modules/.bin/ts-node --esm app.ts",
+    "start-prod": "NODE_ENV=production ./node_modules/.bin/ts-node --esm app.ts",
     "start:watch": "./node_modules/.bin/nodemon -e ts,js -L ./node_modules/.bin/ts-node --esm app.ts",
     "clean": "rimraf coverage build tmp",
     "prebuild": "npm run lint",
