@@ -37,7 +37,9 @@
     "lint": "eslint . --ext .ts --ext .mts",
     "test": "jest --coverage",
     "prettier": "prettier --config ./.prettierrc --write .",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "docker-build": "docker build -t botanic-dev .",
+    "docker-run": "docker run -dp 3000:3000 botanic-dev"
   },
   "author": "@kashesandr",
   "license": "Apache-2.0",
