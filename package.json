@@ -20,7 +20,7 @@
     "prettier": "prettier --config ./.prettierrc --write .",
     "test:watch": "jest --watch",
     "docker-build": "docker build -t botanic-dev .",
-    "docker-run": "docker run -it --mount type=bind,src=\"$(pwd)\",target=/usr/app ubuntu bash"
+    "docker-run": "docker run -dp 3000:3000 -w /usr/app --mount type=bind,src=\"$(pwd)\",target=/usr/app node:18-alpine sh -c \"npm install && npm start\""
   },
   "author": "@kashesandr",
   "license": "Apache-2.0",
