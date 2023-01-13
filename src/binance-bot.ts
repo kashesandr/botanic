@@ -5,6 +5,7 @@ import {PubSub} from "./pubsub.js";
 import {BinanceOrderStatusEnum, BinanceTradingSideEnum} from "./constants/order.enum.js";
 import {logger, LoggerDebugInputParams, LoggerTryCatchExceptionAsync} from './logger.js';
 import {setTimeoutPromise} from "./helpers.js";
+import {Retryable} from "typescript-retry-decorator";
 
 const loggerPrefix = 'BinanceBot';
 const CHECK_ORDERS_LOOP_TIMEOUT = 1000*10;
@@ -28,13 +29,13 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     @LoggerTryCatchExceptionAsync(loggerPrefix)
+    @Retryable({maxAttempts: 3, backOff: 2000})
     public async getBalanceByTicker(ticker: CurrencyTickerEnum): Promise<number> {
         const {data} = await this.binanceConnectClient.userAsset({asset: ticker});
         return Number(data[0]?.free);
     }
 
     @LoggerDebugInputParams(loggerPrefix)
-    @LoggerTryCatchExceptionAsync(loggerPrefix)
     public async isEnoughBalance(ticker: CurrencyTickerEnum, requiredBalance: number): Promise<boolean> {
         const currentBalance = await this.getBalanceByTicker(ticker);
         return currentBalance >= requiredBalance
@@ -42,6 +43,7 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     @LoggerTryCatchExceptionAsync(loggerPrefix)
+    @Retryable({maxAttempts: 3, backOff: 2000})
     public async getExchangePriceByTicker(exchangePairTicker: CurrencyPairTickerEnum): Promise<number> {
         const {data} = await this.binanceConnectClient.tickerPrice(exchangePairTicker);
         return data?.price;
@@ -49,6 +51,7 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     @LoggerTryCatchExceptionAsync(loggerPrefix)
+    @Retryable({maxAttempts: 3, backOff: 2000})
     public async placeBuyLimitOrder({basePrice, baseQuantity, baseCurrencyTicker, currencyTicker}: NewOrder): Promise<BinanceNewOrderComplete> {
         const hasEnoughBalanceToBuy = await this.isEnoughBalance(baseCurrencyTicker, baseQuantity);
         if (!hasEnoughBalanceToBuy) {
@@ -67,6 +70,7 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     @LoggerTryCatchExceptionAsync(loggerPrefix)
+    @Retryable({maxAttempts: 3, backOff: 2000})
     public async placeSellLimitOrder({basePrice, baseQuantity, baseCurrencyTicker, currencyTicker}: NewOrder): Promise<BinanceNewOrderComplete> {
         const hasEnoughBalanceToBuy = await this.isEnoughBalance(baseCurrencyTicker, baseQuantity);
         if (!hasEnoughBalanceToBuy) {
@@ -85,6 +89,7 @@ export class BinanceBot {
 
     @LoggerDebugInputParams(loggerPrefix)
     @LoggerTryCatchExceptionAsync(loggerPrefix)
+    @Retryable({maxAttempts: 3, backOff: 2000})
     public async getOrderDetails(ticker: CurrencyPairTickerEnum, orderId: number): Promise<BinanceOrderDetails> {
         const {data} = await this.binanceConnectClient.getOrder(ticker, {orderId});
         return data;

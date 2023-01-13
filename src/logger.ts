@@ -38,8 +38,7 @@ export const LoggerTryCatchExceptionAsync = (prefix: string) => {
             try {
                 return await originalMethod.apply(this, args);
             }  catch (error) {
-                logger.error(error);
-                throw new Error(`${prefix}: ${error?.message ?? error}`);
+                logger.error(`${prefix}: ${error?.message ?? error}`);
             }
         }
     }
