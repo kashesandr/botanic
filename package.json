@@ -20,7 +20,7 @@
     "prettier": "prettier --config ./.prettierrc --write .",
     "test:watch": "jest --watch",
     "docker-build": "docker build -t botanic-dev .",
-    "docker-run": "docker run -it --mount type=bind,src=\"$(pwd)\",target=/app ubuntu bash"
+    "docker-run": "docker run -it --mount type=bind,src=\"$(pwd)\",target=/usr/app ubuntu bash"
   },
   "author": "@kashesandr",
   "license": "Apache-2.0",
