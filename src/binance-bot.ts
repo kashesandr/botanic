@@ -64,7 +64,7 @@ export class BinanceBot {
             quantity: baseQuantity,
             timeInForce: 'GTC'
         })
-        logger.info(`Order placed successfully: ${BinanceTradingSideEnum.BUY} ${currencyTicker} (${baseCurrencyTicker} ${baseQuantity})`)
+        logger.info(`Order ${data.orderId} placed successfully: ${BinanceTradingSideEnum.BUY} ${currencyTicker} (${baseCurrencyTicker} ${baseQuantity})`)
         return data;
     }
 
